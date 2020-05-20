@@ -20,26 +20,28 @@ uint32_t noise(uint64_t x, uint32_t seed)
 float octave(float x, int amplitude, float period, int seed)
 {
     int x0 = static_cast<int>( x / period );
+    if(x < 0)
+        x0--;
 
     int p0 = noise(x0, seed) % amplitude;
     int p1 = noise(x0 + 1, seed) % amplitude;
 
-    float t = x/float(period) - float(x0) ;
+    float t = x / float(period) - float(x0);
+
     return float(p0) - smooth(t) * float(p0 - p1);
 
 }
 
-void redraw(sf::VertexArray &v)
+void update(sf::VertexArray &v, int x, int seed)
 {
     sf::Clock clock;
 
-    int seed = rand();
     v.clear();
-    for(int i(0); i<960; i++ )
+    for (int i(0); i < 960; i++)
     {
-        float h = octave(i,300,200,seed) + octave(i,100,50,seed) + octave(i,10,10,seed);
+        float h = octave(i + x, 300, 200, seed) + octave(i + x, 100, 50, seed) + octave(i + x, 10, 10, seed);
         h += 90;
-        v.append(sf::Vertex(sf::Vector2f(i,h), sf::Color::Blue));
+        v.append(sf::Vertex(sf::Vector2f(i, h), sf::Color::Blue));
     }
     std::cout << "Noise drawn in : " << clock.getElapsedTime().asMicroseconds();
     std::cout << " microseconds" << std::endl;
@@ -49,11 +51,15 @@ void redraw(sf::VertexArray &v)
 int main()
 {
     std::cout << "Espace: redessiner le bruit" << std::endl;
+    std::cout << "Gauche et Droite pour se deplacer" << std::endl;
 
     sf::RenderWindow mWindow(sf::VideoMode(16 * 60, 9 * 60), "Noise");
 
     sf::VertexArray line(sf::LineStrip);
-    redraw(line);
+
+    int x(0);
+    int seed(rand());
+    update(line, x, seed);
 
     while (mWindow.isOpen())
     {
@@ -63,7 +69,21 @@ int main()
             if (event.type == sf::Event::Closed)
                 mWindow.close();
             if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Space)
-                redraw(line);
+            {
+                seed = rand();
+                x = 0;
+                update(line, x, seed);
+            }
+            if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Right)
+            {
+                x += 100;
+                update(line, x, seed);
+            }
+            if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Left)
+            {
+                x -= 100;
+                update(line, x, seed);
+            }
 
         }
         mWindow.clear(sf::Color(25, 25, 25));
