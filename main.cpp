@@ -1,6 +1,13 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 
+struct octaveParam
+{
+    octaveParam(int amp, float per) : amplitude(amp), period(per) {}
+    int amplitude;
+    float period;
+};
+
 float smooth(float x)
 {
     return 6 * x * x * x * x * x - 15 * x * x * x * x + 10 * x * x * x;
@@ -31,12 +38,15 @@ float octave(float x, int amplitude, float period, int seed)
     return float(p0) - smooth(t) * float(p0 - p1);
 }
 
-void update(sf::VertexArray &v, int x, int seed)
+void update(sf::VertexArray &v, int x, int seed, std::vector<octaveParam> &parameters)
 {
     v.clear();
     for (int i(0); i < 960; i++)
     {
-        float h = octave(i + x, 300, 200, seed) + octave(i + x, 100, 50, seed) + octave(i + x, 10, 10, seed);
+        float h(0);
+        for(int j(0); j< parameters.size(); j++)
+            h += octave(i + x, parameters[j].amplitude, parameters[j].period, seed + j);
+
         h += 90;
         v.append(sf::Vertex(sf::Vector2f(i, h), sf::Color::Blue));
     }
@@ -50,10 +60,14 @@ int main()
     sf::RenderWindow mWindow(sf::VideoMode(16 * 60, 9 * 60), "Noise");
 
     sf::VertexArray line(sf::LineStrip);
+    std::vector<octaveParam> parameters;
+    parameters.emplace_back(300,200);
+    parameters.emplace_back(100,50);
+    parameters.emplace_back(10,10);
 
     int x(0);
     int seed(rand());
-    update(line, x, seed);
+    update(line, x, seed,parameters);
 
     while (mWindow.isOpen())
     {
@@ -67,19 +81,40 @@ int main()
                 seed = rand();
                 x = 0;
                 sf::Clock clock;
-                update(line, x, seed);
+                update(line, x, seed,parameters);
                 std::cout << "Noise drawn in : " << clock.getElapsedTime().asMicroseconds();
                 std::cout << " microseconds" << std::endl;
             }
             if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Right)
             {
                 x += 250;
-                update(line, x, seed);
+                update(line, x, seed, parameters);
             }
             if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Left)
             {
                 x -= 250;
-                update(line, x, seed);
+                update(line, x, seed, parameters);
+            }
+            if ((event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::R))
+            {
+                unsigned int o;
+                parameters.clear();
+
+                std::cout<<"Octave count:";
+                std::cin>>o;
+
+                for(int i(0); i<o; i++)
+                {
+                    int a;
+                    float p;
+                    std::cout<<"Octave "<<i+1<<std::endl;
+                    std::cout<<"Amplitude :";
+                    std::cin>>a;
+                    std::cout<<"Period :";
+                    std::cin>>p;
+                    parameters.emplace_back(a,p);
+                    update(line, x, seed,parameters);
+                }
             }
 
         }
