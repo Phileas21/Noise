@@ -20,7 +20,7 @@ uint32_t noise(uint64_t x, uint32_t seed)
 float octave(float x, int amplitude, float period, int seed)
 {
     int x0 = static_cast<int>( x / period );
-    if(x < 0)
+    if (x < 0)
         x0--;
 
     int p0 = noise(x0, seed) % amplitude;
@@ -29,13 +29,10 @@ float octave(float x, int amplitude, float period, int seed)
     float t = x / float(period) - float(x0);
 
     return float(p0) - smooth(t) * float(p0 - p1);
-
 }
 
 void update(sf::VertexArray &v, int x, int seed)
 {
-    sf::Clock clock;
-
     v.clear();
     for (int i(0); i < 960; i++)
     {
@@ -43,10 +40,7 @@ void update(sf::VertexArray &v, int x, int seed)
         h += 90;
         v.append(sf::Vertex(sf::Vector2f(i, h), sf::Color::Blue));
     }
-    std::cout << "Noise drawn in : " << clock.getElapsedTime().asMicroseconds();
-    std::cout << " microseconds" << std::endl;
 }
-
 
 int main()
 {
@@ -72,16 +66,19 @@ int main()
             {
                 seed = rand();
                 x = 0;
+                sf::Clock clock;
                 update(line, x, seed);
+                std::cout << "Noise drawn in : " << clock.getElapsedTime().asMicroseconds();
+                std::cout << " microseconds" << std::endl;
             }
             if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Right)
             {
-                x += 100;
+                x += 250;
                 update(line, x, seed);
             }
             if (event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Left)
             {
-                x -= 100;
+                x -= 250;
                 update(line, x, seed);
             }
 
@@ -92,29 +89,3 @@ int main()
         sf::sleep(sf::seconds(1.f / 60));
     }
 }
-
-/*
-     sf::Clock clock;
-    clock.restart();
-    unsigned int seed = rand();
-    int x(0);
-    while (x * period < 1000)
-    {
-        double p0, p1;
-        p0 = noise(x, seed) % 500;
-        p1 = noise(x + 1, seed) % 500;
-
-
-        for (int i(0); i < period; i++)
-        {
-            float t = float(i) / float(period);
-            auto h = p0 - smooth(t) * (p0 - p1);
-            sf::Vector2f position(x * period + i, h);
-            v.append(sf::Vertex(position, sf::Color(0, 0, 255)));
-        }
-        x++;
-    }
-    std::cout << "Noise drawn in : " << clock.getElapsedTime().asMicroseconds();
-    std::cout << " microseconds" << std::endl;
-}
- */
